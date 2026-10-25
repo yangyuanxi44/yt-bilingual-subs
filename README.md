@@ -10,7 +10,10 @@
 [![Chrome 111+](https://img.shields.io/badge/Chrome-111%2B-4285F4?style=flat-square&logo=googlechrome&logoColor=white)](https://www.google.com/chrome/)
 [![Edge Chromium](https://img.shields.io/badge/Edge-Chromium-0078D7?style=flat-square&logo=microsoftedge&logoColor=white)](https://www.microsoft.com/edge)
 [![DeepSeek](https://img.shields.io/badge/LLM-DeepSeek-4D6BFE?style=flat-square)](https://platform.deepseek.com/)
+[![AI-generated](https://img.shields.io/badge/AI-generated-8A2BE2?style=flat-square)](NOTICE.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
+> **AI 生成内容声明**：本项目代码、文档、示例数据、界面文案和截图说明均由 AI 生成或 AI 辅助生成，并经人工整理与测试。AI 生成内容可能有误，仅供学习参考。开源协议为 **MIT License**，详见 [NOTICE.md](NOTICE.md) 与 [LICENSE](LICENSE)。
 
 ![点词查意 · 本地 DEMO 预览](demo/preview/hero-word-card.png)
 
@@ -276,6 +279,14 @@ A: 当前只支持桌面 Chrome / Edge（MV3，`world: "MAIN"` 需要 Chrome 111
 - 只对英文轨做双语；非英语视频暂不支持。
 - 依赖 YouTube 未公开接口 `getPlayerResponse()` / timedtext，若 YouTube 调整接口，降级方案是读取原生 CC 的 DOM 字幕（需开启 CC）。
 - 单词卡按「单词 + 当前句」查询，同一单词在不同语境下会各缓存一次。
+
+## AI 生成内容与开源协议
+
+- **AI 生成内容**：本项目的源代码、文档、示例数据、界面文案、截图说明和发布文案均由 AI 生成或 AI 辅助生成，并经人工整理、调试与测试。AI 内容可能存在错误或遗漏，仅供学习参考，不构成任何专业建议或保证。
+- **开源协议**：本项目采用 **MIT License**，可自由使用、修改和分发，但需保留版权与许可声明。
+- **第三方说明**：本项目与 YouTube、Google、Microsoft、DeepSeek 均无官方关联；使用时请遵守相应服务条款与当地法律法规。
+
+完整声明见 [NOTICE.md](NOTICE.md)，许可条款见 [LICENSE](LICENSE)。
 
 ## License
 
