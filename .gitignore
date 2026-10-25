@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+
+# build output (GitHub Releases hosts the packed zip)
+dist/
+
+# local test / diagnostic screenshots (only curated previews are committed)
+demo/preview/diag-*.png
+demo/preview/native-*.png
+demo/preview/real-youtube.png
+demo/preview/ego-drag-demo.png
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

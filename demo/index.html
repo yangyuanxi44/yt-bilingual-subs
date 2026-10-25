@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>YT 双语字幕 · 点词查意 — 本地预览</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../src/content/page.css">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="bar-inner">
+    <div class="brand">
+      YT 双语字幕 · 点词查意
+      <span class="tag">UI 本地预览</span>
+    </div>
+    <p class="notice">本地预览，不会请求 DeepSeek 或连接 YouTube。字幕、翻译与查词结果均来自 <code>demo/mock-data.js</code>。</p>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage-col">
+    <div class="player-shell">
+      <div class="demo-player" id="movie_player">
+        <div class="demo-screen">
+          <div class="demo-art" aria-hidden="true">
+            <div class="demo-orb demo-orb-a"></div>
+            <div class="demo-orb demo-orb-b"></div>
+            <div class="demo-grain"></div>
+            <div class="demo-wordmark">SLOW&nbsp;TOWN</div>
+            <div class="demo-submark">a quiet travel film · demo footage</div>
+          </div>
+
+          <!-- 模拟 YouTube 原生字幕容器：用于验证 page.css 的 ytbtl-hide-native 规则 -->
+          <div class="ytp-caption-window-container demo-native-caption" aria-hidden="true">
+            <div class="caption-window">YouTube 原生字幕示例：开启「隐藏 YouTube 原生字幕」后会隐藏这一行</div>
+          </div>
+
+          <div class="demo-controls">
+            <button type="button" id="demo-play" class="demo-play" title="播放" aria-label="播放">▶</button>
+            <div class="demo-progress" id="demo-progress" role="slider" aria-label="播放进度"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+              <div class="demo-progress-fill" id="demo-progress-fill"></div>
+            </div>
+            <span class="demo-time" id="demo-time">0:00 / 0:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="stage-hint">
+      点击英文单词查词 · 按住字幕可拖动到任意位置（工具栏 ⌖ 复位）· Esc 或点击播放器空白处关闭单词卡 · 工具栏「中」循环 off → hover → on，A− / A+ 调整英文字号
+    </p>
+  </section>
+
+  <aside class="sidebar" aria-label="演示设置">
+    <section class="panel">
+      <h2>中文字幕</h2>
+      <div class="seg" role="group" aria-label="中文字幕显示方式">
+        <button type="button" data-set="zhMode" data-value="off">隐藏</button>
+        <button type="button" data-set="zhMode" data-value="hover">悬停</button>
+        <button type="button" data-set="zhMode" data-value="on">常显</button>
+      </div>
+      <p class="note">与播放器右上角工具栏「中」按钮联动。</p>
+
+      <h2>中文字号 <span class="value" id="zh-size-value">11px</span></h2>
+      <div class="seg" role="group" aria-label="中文字号">
+        <button type="button" data-set="zhSize" data-value="8">8px</button>
+        <button type="button" data-set="zhSize" data-value="11">11px</button>
+        <button type="button" data-set="zhSize" data-value="14">14px</button>
+      </div>
+      <p class="note">8px 是产品允许的最小字号，仍然保持可读。</p>
+
+      <h2>英文字号 <span class="value" id="en-size-value">24px</span></h2>
+      <div class="seg" role="group" aria-label="英文字号">
+        <button type="button" data-set="enSize" data-value="20">20px</button>
+        <button type="button" data-set="enSize" data-value="24">24px</button>
+        <button type="button" data-set="enSize" data-value="28">28px</button>
+      </div>
+
+      <label class="switch">
+        <input type="checkbox" id="opt-enabled">
+        <span class="switch-track" aria-hidden="true"></span>
+        <span>启用双语字幕</span>
+      </label>
+      <label class="switch">
+        <input type="checkbox" id="opt-native">
+        <span class="switch-track" aria-hidden="true"></span>
+        <span>隐藏 YouTube 原生字幕</span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>演示状态</h2>
+      <div class="seg seg-wrap" id="status-row" role="group" aria-label="演示状态">
+        <button type="button" data-phase="ready">就绪</button>
+        <button type="button" data-phase="loading">载入中</button>
+        <button type="button" data-phase="translating">翻译中</button>
+        <button type="button" data-phase="error">错误 + 重试</button>
+        <button type="button" data-phase="no-captions">无字幕</button>
+      </div>
+      <p class="note">预览状态提示、翻译进度 pill、错误条与「重试」。</p>
+    </section>
+
+    <section class="panel">
+      <h2>词库</h2>
+      <p class="note">已加入 <strong id="wordbook-count">0</strong> 个单词。演示页只写入 localStorage，不连接后台。</p>
+    </section>
+  </aside>
+</main>
+
+<footer class="foot">
+  验收点：初始英文逐词可点 · 点击出卡（400ms loading）· 中文 hover / 常显 · 8px 中文 · 工具栏切换 · 状态与错误重试。
+</footer>
+
+<script src="../src/lib/core.js"></script>
+<script src="../src/content/ui.js"></script>
+<script src="mock-data.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>设置 · YT 双语字幕 · 点词查意</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img class="brand-icon" src="../assets/icons/icon48.png" alt="" width="34" height="34">
+        <div class="brand-text">
+          <h1>YT 双语字幕 · 设置</h1>
+          <p>点词查意 · DeepSeek 翻译 · 全部设置保存在本机</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="saveStatus" class="save-status" data-tone="pending" role="status">加载中…</span>
+        <button id="testBtn" class="btn" type="button">测试连接</button>
+        <button id="resetBtn" class="btn btn-ghost" type="button">恢复默认</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidenav" aria-label="设置分区">
+      <a class="nav-link" href="#sec-display" data-target="sec-display">显示</a>
+      <a class="nav-link" href="#sec-learning" data-target="sec-learning">学习</a>
+      <a class="nav-link" href="#sec-translate" data-target="sec-translate">翻译</a>
+      <a class="nav-link" href="#deepseek" data-target="deepseek">DeepSeek</a>
+      <a class="nav-link" href="#wordbook" data-target="wordbook">词库</a>
+      <a class="nav-link" href="#shortcuts" data-target="shortcuts">快捷键与隐私</a>
+      <a class="nav-link" href="#about" data-target="about">关于</a>
+    </nav>
+
+    <main class="main">
+      <section id="sec-display" class="panel">
+        <div class="panel-head">
+          <h2>显示</h2>
+          <p>字幕外观，以及如何处理 YouTube 原生字幕</p>
+        </div>
+        <div class="settings" data-group="显示"></div>
+        <div class="panel-foot">
+          <button id="resetSubtitlePosBtn" class="btn" type="button">复位字幕位置</button>
+          <span class="meta">在 YouTube 播放器里按住字幕即可拖动到任意位置（自动记忆）；复位后回到默认底部居中</span>
+        </div>
+      </section>
+
+      <section id="sec-learning" class="panel">
+        <div class="panel-head">
+          <h2>学习</h2>
+          <p>点击单词查词时的播放行为</p>
+        </div>
+        <div class="settings" data-group="学习"></div>
+      </section>
+
+      <section id="sec-translate" class="panel">
+        <div class="panel-head">
+          <h2>翻译</h2>
+          <p>中文字幕的生成策略；API Key 请在下方 DeepSeek 区填写</p>
+        </div>
+        <div class="settings" data-group="翻译"></div>
+      </section>
+
+      <section id="deepseek" class="panel">
+        <div class="panel-head">
+          <h2>DeepSeek</h2>
+          <p>API Key 只保存在本机 chrome.storage.local，不会上传到任何其他服务器</p>
+        </div>
+        <div class="settings" data-group="DeepSeek"></div>
+
+        <div id="baseUrlNotice" class="inline-notice" hidden>
+          <p id="baseUrlNoticeText" class="inline-notice-text"></p>
+          <div class="inline-notice-actions">
+            <button id="grantBtn" class="btn btn-accent" type="button">授权并保存</button>
+            <button id="revertBaseUrlBtn" class="btn btn-ghost" type="button">回退默认</button>
+          </div>
+        </div>
+
+        <div id="testResult" class="test-result" hidden></div>
+
+        <div class="panel-foot">
+          <button id="testBtnInline" class="btn btn-accent" type="button">测试连接</button>
+          <span class="meta">使用当前填写的 Key / 地址 / 模型发起一次最小请求</span>
+        </div>
+
+        <div class="panel-foot cache-foot">
+          <button id="clearCacheBtn" class="btn" type="button">清除翻译 / 查词缓存</button>
+          <span id="cacheInfo" class="meta">本机缓存读取中…</span>
+        </div>
+        <p class="meta cache-hint">换模型后缓存会自动失效重算；只改温度等参数不影响已缓存结果，想重算当前视频的译文时清除缓存即可。</p>
+      </section>
+
+      <section id="wordbook" class="panel">
+        <div class="panel-head">
+          <h2>词库 <span id="wordbookCount" class="count">0</span></h2>
+          <div class="panel-actions">
+            <button id="exportBtn" class="btn" type="button">导出 CSV</button>
+            <button id="clearBtn" class="btn btn-danger" type="button">清空</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="wordbook-table">
+            <thead>
+              <tr>
+                <th scope="col">单词</th>
+                <th scope="col">音标</th>
+                <th scope="col">释义</th>
+                <th scope="col">来源视频</th>
+                <th scope="col">加入时间</th>
+                <th scope="col" class="col-action">操作</th>
+              </tr>
+            </thead>
+            <tbody id="wordbookBody"></tbody>
+          </table>
+        </div>
+        <p id="wordbookEmpty" class="empty" hidden>词库还是空的：在 YouTube 字幕里点击任意单词，选择「加入词库」即可。</p>
+      </section>
+
+      <section id="shortcuts" class="panel">
+        <div class="panel-head">
+          <h2>快捷键与隐私</h2>
+          <p>在 YouTube 播放页生效（未与 YouTube 自带快捷键冲突）</p>
+        </div>
+        <ul class="shortcut-list">
+          <li><kbd>Alt</kbd> + <kbd>Z</kbd><span>循环切换中文字幕：隐藏 → 悬停显示 → 常显</span></li>
+          <li><kbd>Alt</kbd> + <kbd>[</kbd><span>减小中文字幕字号</span></li>
+          <li><kbd>Alt</kbd> + <kbd>]</kbd><span>增大中文字幕字号</span></li>
+          <li><kbd>Alt</kbd> + <kbd>E</kbd><span>启用 / 关闭双语字幕</span></li>
+        </ul>
+        <div class="privacy">
+          <h3>隐私说明</h3>
+          <ul>
+            <li>DeepSeek API Key 仅保存在本机 <code>chrome.storage.local</code>，不会同步、不会上传到除 DeepSeek API 之外的任何服务器。</li>
+            <li>只有需要翻译的字幕文本与点击查询的单词会发送给你配置的 DeepSeek API（默认 <code>https://api.deepseek.com</code>）。</li>
+            <li>翻译与查词结果缓存在本机，词库也只保存在本机；卸载扩展即全部清除。</li>
+            <li>扩展不收集浏览记录，不注入广告，不请求第三方统计脚本。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="about" class="panel">
+        <div class="panel-head">
+          <h2>关于</h2>
+          <p>YouTube 双语字幕 · 点词查意</p>
+        </div>
+        <dl class="about-list">
+          <div><dt>版本</dt><dd id="aboutVersion">1.0.0</dd></div>
+          <div><dt>模型</dt><dd>DeepSeek（OpenAI 兼容 API）</dd></div>
+          <div><dt>快捷键</dt><dd>Alt+Z / Alt+[ / Alt+] / Alt+E</dd></div>
+        </dl>
+        <p id="pageFoot" class="page-foot"></p>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="../lib/core.js" defer></script>
+  <script src="options.js" defer></script>
+</body>
+</html>

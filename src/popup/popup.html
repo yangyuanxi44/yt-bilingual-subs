@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YT 双语字幕 · 点词查意</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <header class="brand">
+      <img class="brand-icon" src="../assets/icons/icon32.png" alt="" width="34" height="34">
+      <div class="brand-text">
+        <h1 class="brand-name">YT 双语字幕</h1>
+        <p class="brand-sub">点词查意 · DeepSeek</p>
+      </div>
+      <span id="enabledState" class="state-pill" data-state="on">已启用</span>
+    </header>
+
+    <div id="apiWarn" class="notice notice-warn" hidden>
+      <span class="notice-text">未配置 API Key，翻译与查词不可用</span>
+      <button id="apiWarnBtn" class="notice-btn" type="button">去配置</button>
+    </div>
+
+    <main class="content">
+      <section class="card">
+        <h2 class="card-title">常用设置</h2>
+        <div id="quickSettings" class="quick-settings"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 class="card-title">DeepSeek 连接</h2>
+          <span id="connMeta" class="meta">未测试</span>
+        </div>
+        <p id="testResult" class="test-result" hidden></p>
+        <div class="btn-row">
+          <button id="testBtn" class="btn btn-primary" type="button">测试连接</button>
+          <button id="optionsBtn" class="btn" type="button">打开设置</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2 class="card-title">当前视频</h2>
+          <span id="videoPhase" class="meta" data-tone="idle">检测中…</span>
+        </div>
+        <p id="videoTitle" class="video-title">正在读取当前标签页…</p>
+        <p id="videoDetail" class="video-detail"></p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span id="versionLabel" class="version">v1.0.0</span>
+      <span class="footer-hint">Alt+Z 切换中文 · Alt+E 开关</span>
+    </footer>
+  </div>
+
+  <script src="../lib/core.js" defer></script>
+  <script src="popup.js" defer></script>
+</body>
+</html>

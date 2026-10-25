@@ -1,0 +1,38 @@
+/*
+ * 页面级规则：作为 content script 的 css 注入 YouTube 页面（不在 Shadow DOM 内）。
+ * 只放必须作用于页面的规则；所有插件自身的视觉样式都在 src/content/styles.css。
+ */
+
+/* 隐藏 YouTube 原生字幕：ui.js 在 settings.enabled && hideNativeCaptions 时
+   给 #movie_player 添加 ytbtl-hide-native class。
+   注意：这里只用 opacity/pointer-events，不能用 display:none ——
+   display:none 会让原生的滚动字幕失去布局测量，导致 textContent 无限累积
+   （DOM 兜底捕获时会变成一大段台词）；opacity:0 既看不见，又保留原生滚动逻辑。 */
+.ytbtl-hide-native .ytp-caption-window-container,
+.ytbtl-hide-native .ytp-caption-window,
+.ytbtl-hide-native .caption-window {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 原生模式：把 YouTube 原生字幕整体上移，给下方中文留出位置。
+   上移量由 ui.js 根据原生字幕实际高度动态写入 --ytbtl-native-shift。 */
+.ytbtl-native-shift .ytp-caption-window-container {
+  transform: translateY(calc(-1 * var(--ytbtl-native-shift, 0px))) !important;
+  /* 原生模式下即使 hide-native class 竞态残留，也必须让原生字幕可见 */
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 覆盖层宿主：铺满播放器、完全不拦截鼠标，点击穿透到播放器控件。
+   （ui.js 也设置了内联样式，这里兜底防止页面 CSS 覆盖。） */
+#movie_player > .ytbtl-host {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2147483000;
+}
+
+/* 剧场 / 全屏模式下播放器尺寸由 #movie_player 自身决定，无需额外规则；
+   UI 内部全部使用绝对定位 + CSS 变量，随播放器自适应。 */

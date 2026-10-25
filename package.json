@@ -1,0 +1,14 @@
+{
+  "name": "yt-bilingual-subs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "YouTube 双语字幕学习扩展：英文字幕点词查询（DeepSeek）、中文字幕可隐藏/悬停/8px 微缩。",
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check.mjs",
+    "demo": "node -e \"console.log('直接用浏览器打开 demo/index.html')\"",
+    "smoke": "node scripts/smoke-extension.mjs",
+    "e2e": "node scripts/e2e-youtube-mock.mjs",
+    "icons": "python scripts/make-icons.py"
+  }
+}
