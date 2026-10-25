@@ -25,10 +25,12 @@ foreach ($rel in $required) {
   if (-not (Test-Path (Join-Path $root $rel))) { throw "缺少打包所需文件: $rel" }
 }
 
-# 收集文件：源码所有文件 + manifest + README
+# 收集文件：源码所有文件 + manifest + README + LICENSE + NOTICE
 $files = @(
   @{ Abs = Join-Path $root "manifest.json"; Entry = "manifest.json" },
-  @{ Abs = Join-Path $root "README.md"; Entry = "README.md" }
+  @{ Abs = Join-Path $root "README.md"; Entry = "README.md" },
+  @{ Abs = Join-Path $root "LICENSE"; Entry = "LICENSE" },
+  @{ Abs = Join-Path $root "NOTICE.md"; Entry = "NOTICE.md" }
 )
 Get-ChildItem (Join-Path $root "src") -Recurse -File | ForEach-Object {
   $rel = $_.FullName.Substring($root.Length + 1).Replace("\", "/")
