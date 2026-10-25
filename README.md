@@ -226,7 +226,7 @@ powershell -ExecutionPolicy Bypass -File scripts/pack.ps1
 **Q: 安装时报「无法从以下源加载扩展 / 无法为脚本加载 JavaScript 'src/content/bridge.js'」？**
 A: 这是旧版 zip 的路径分隔符不规范导致的：某些解压/安装工具会把 `src\content\bridge.js` 当成**一个文件名**（而不是 `src/content/` 下的文件），扩展就找不到脚本了。已修复打包脚本，请：
 1. 在 `edge://extensions` / `chrome://extensions` 里删除加载失败的条目；
-2. 使用**最新的** `dist/yt-bilingual-subs.zip`，用系统解压（右键 →「全部解压缩」）解到**新目录**；
+2. 使用**最新的** [Release zip](https://github.com/yangyuanxi44/yt-bilingual-subs/releases/latest)（或本仓库 `dist/` 下打包的 zip），用系统解压（右键 →「全部解压缩」）解到**新目录**；
 3. 确认该目录里 `manifest.json` 和 `src\content\bridge.js` 是正常的文件夹结构（不是带 `\` 的怪文件名）；
 4. 「加载已解压的扩展程序」时选择**解压后的文件夹**，不要直接选 zip 文件。
    也可以跳过解压，直接选择项目根目录 `yt-bilingual-subs`（含 `manifest.json` 的那一层）。
