@@ -798,17 +798,26 @@
         return;
       }
       const tokens = C.tokenize(currentCue.text);
+      const textEl = el('span', 'ytbtl-en-text');
       for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
         if (token.word) {
           const span = el('span', 'ytbtl-word', token.v);
           span.setAttribute('data-raw', token.v);
-          enLine.appendChild(span);
+          textEl.appendChild(span);
         } else {
-          enLine.appendChild(playerDocument.createTextNode(token.v));
+          textEl.appendChild(playerDocument.createTextNode(token.v));
         }
       }
+      enLine.appendChild(textEl);
       updateZh();
+      applyPosition();
+    }
+
+    /** DOM 兜底模式：给英文行预留两行高度，滚动字幕增长时不会上下跳 */
+    function setDomMode(on) {
+      if (destroyed) return;
+      try { subsEl.classList.toggle('ytbtl-dom-lines', !!on); } catch (e) { /* 忽略 */ }
       applyPosition();
     }
 
@@ -1399,6 +1408,7 @@
       destroy: destroy,
       setCues: setCues,
       setTranslations: setTranslations,
+      setDomMode: setDomMode,
       setSettings: setSettings,
       setStatus: setStatus,
       tick: tick,

@@ -111,6 +111,23 @@ test('parseJson3: 基本解析 / aAppend 忽略 / 时间单调不重叠', () => 
   }
 });
 
+test('parseJson3: preserveTiming 保留原生 event 起止时间且不切分', () => {
+  const longText = 'This is a deliberately long caption event that would normally be split by the parser into several shorter pieces for display.';
+  const json3 = {
+    events: [
+      { tStartMs: 1000, dDurationMs: 8000, segs: [{ utf8: longText }] },
+      { tStartMs: 9500, dDurationMs: 1500, segs: [{ utf8: 'Next line.' }] },
+    ],
+  };
+  const cues = Y.parseJson3(json3, { preserveTiming: true });
+  assert.equal(cues.length, 2);
+  assert.equal(cues[0].text, longText);
+  assert.equal(cues[0].start, 1);
+  assert.equal(cues[0].end, 9);
+  assert.equal(cues[1].start, 9.5);
+  assert.equal(cues[1].end, 11);
+});
+
 test('parseJson3: 接受字符串输入，非法输入返回空数组', () => {
   assert.deepEqual(Y.parseJson3('not json'), []);
   assert.deepEqual(Y.parseJson3(null), []);

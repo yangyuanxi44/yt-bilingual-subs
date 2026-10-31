@@ -121,6 +121,8 @@
 
 .ytbtl-line-en {
   max-width: 100%;
+  display: flex;
+  align-items: flex-end;
   font-size: var(--ytbtl-en-size, 24px);
   font-weight: 600;
   line-height: 1.32;
@@ -137,6 +139,15 @@
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
+}
+
+.ytbtl-subs.ytbtl-dom-lines .ytbtl-line-en:not(:empty) {
+  min-height: calc(var(--ytbtl-en-size, 24px) * 2.64);
+}
+
+.ytbtl-en-text {
+  display: block;
+  width: 100%;
 }
 
 .ytbtl-subs.is-pressing .ytbtl-line-en,

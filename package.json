@@ -1,6 +1,6 @@
 {
   "name": "yt-bilingual-subs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "YouTube 双语字幕学习扩展：英文字幕点词查询（DeepSeek）、中文字幕可隐藏/悬停/8px 微缩。",
   "scripts": {

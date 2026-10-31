@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "YT 双语字幕 · 点词查意",
   "short_name": "YT 双语字幕",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "YouTube 双语字幕学习助手：英文字幕逐词可点，点击用 DeepSeek 查词；中文字幕可隐藏、悬停显示或缩到 8px。",
   "minimum_chrome_version": "111",
   "permissions": ["storage"],

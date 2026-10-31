@@ -318,7 +318,8 @@
     return out;
   }
 
-  function finalizeCues(rawCues) {
+  function finalizeCues(rawCues, options) {
+    const preserveTiming = !!(options && options.preserveTiming);
     const cues = [];
     const seen = new Set();
     for (const c of rawCues) {
@@ -333,7 +334,8 @@
       const c = cues[i];
       c.start = Math.max(0, Number(c.start) || 0);
       c.end = Math.max(c.start + 0.5, Number(c.end) || c.start + 2);
-      if (c.end - c.start > 9) c.end = c.start + 9;
+      // 保留原生 event timing 时不做 9s 截断，避免长句被压缩后和音频错位
+      if (!preserveTiming && c.end - c.start > 9) c.end = c.start + 9;
       const next = cues[i + 1];
       if (next && next.start > c.start && next.start < c.end) {
         c.end = Math.max(c.start + 0.5, next.start);
@@ -351,6 +353,7 @@
   function parseJson3(input, options) {
     const data = typeof input === 'string' ? safeJson(input) : input;
     if (!data || !Array.isArray(data.events)) return [];
+    const preserveTiming = !!(options && options.preserveTiming);
     const raw = [];
     for (const ev of data.events) {
       if (!ev || ev.aAppend) continue;
@@ -367,10 +370,15 @@
     }
     const out = [];
     for (const c of raw) {
+      if (preserveTiming) {
+        // 直接沿用 YouTube 原生 event 的起止时间，和原生播放器同步
+        out.push({ start: c.start, end: c.end, text: c.text });
+        continue;
+      }
       const parts = splitCue(c, options);
       for (const p of parts) out.push(p);
     }
-    return finalizeCues(out);
+    return finalizeCues(out, preserveTiming ? { preserveTiming: true } : undefined);
   }
 
   function safeJson(str) {

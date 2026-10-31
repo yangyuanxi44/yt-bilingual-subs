@@ -24,11 +24,12 @@
   const PLAYER_WAIT_MS = 15000;
   const NAV_POLL_MS = 1000;
   const DOM_CAPTION_TIMEOUT_MS = 5000;
-  const DOM_TAIL_WORDS = 16;            // DOM 兜底模式最多显示/翻译的最新词数
+  const DOM_TAIL_WORDS = 24;            // DOM 兜底模式最多显示/翻译的最新词数
   const DOM_LIVE_MAX_MS = 7000;         // 单条滚动字幕最长存活时间
   const DOM_LIVE_HOLD_SEC = 4.2;        // 无新字幕时，当前一句最多再停留多少秒（避免字幕赖在屏幕上）
   const DOM_STABLE_MS = 300;            // 文本稳定多久后翻译
   const DOM_FAST_INTERVAL_MS = 1400;    // 滚动字幕最多多久补一次实时翻译
+  const DOM_COMMIT_MS = 160;            // 合并高频 DOM 文本变化，避免逐词重绘造成跳动
   const MAX_TRANSLATE_BATCHES = 2;      // 契约：翻译并发 ≤ 2
   const MAX_TRANSLATE_ATTEMPTS = 2;
   const TRANSLATE_RETRY_DELAY_MS = 5000;
@@ -97,6 +98,10 @@
     cardInfo: null,
     rafId: 0,
     navTimer: 0,
+    lastSyncCheckAt: 0,
+    syncMismatchTicks: 0,
+    lastNativeText: '',
+    nativeTextChanges: 0,
   };
 
   const bridgePending = new Map();
@@ -359,6 +364,10 @@
     state.errorCode = '';
     state.lastErrorKind = '';
     state.domMode = false;
+    state.lastSyncCheckAt = 0;
+    state.syncMismatchTicks = 0;
+    state.lastNativeText = '';
+    state.nativeTextChanges = 0;
     state.domText = '';
     state.domCues = [];
     state.domLive = null;
@@ -368,6 +377,7 @@
     if (state.retryTimer) { clearTimeout(state.retryTimer); state.retryTimer = null; }
     if (state.overlay) {
       try {
+        state.overlay.setDomMode(false);
         state.overlay.setCues([]);
         state.overlay.setTranslations([]);
       } catch (e) { /* 忽略 */ }
@@ -395,7 +405,7 @@
           if (gen !== state.generation) return;
           let cues = [];
           if (body) {
-            try { cues = core.parseJson3(body); } catch (e) { cues = []; }
+            try { cues = core.parseJson3(body, { preserveTiming: true }); } catch (e) { cues = []; }
           }
           if (cues.length) {
             state.domMode = false;
@@ -410,6 +420,7 @@
             state.lastErrorKind = '';
             if (state.overlay) {
               try {
+                state.overlay.setDomMode(false);
                 state.overlay.setCues(cues);
                 state.overlay.setTranslations(state.translations);
               } catch (e) { /* 忽略 */ }
@@ -449,6 +460,7 @@
     state.activeBatches = 0;
     if (state.overlay) {
       try {
+        state.overlay.setDomMode(true);
         state.overlay.setCues([]);
         state.overlay.setTranslations([]);
       } catch (e) { /* 忽略 */ }
@@ -502,7 +514,7 @@
     if (!words.length) return '';
     if (words.length > DOM_TAIL_WORDS) words = words.slice(words.length - DOM_TAIL_WORDS);
     let out = words.join(' ');
-    if (out.length > 140) out = out.slice(-140);
+    if (out.length > 190) out = out.slice(-190);
     return core.cleanText(out);
   }
 
@@ -558,6 +570,7 @@
 
     if (!text) {
       finalizeDomLive(time, true);
+      scheduleDomCommit();
       return;
     }
 
@@ -565,7 +578,7 @@
     if (!live) {
       state.domLive = { start: Math.max(0, time - 0.3), end: time + DOM_LIVE_HOLD_SEC, text: text, lastAt: time };
       scheduleDomTranslation(text);
-      commitDomCues();
+      scheduleDomCommit();
       return;
     }
     if (text === live.text) {
@@ -586,7 +599,7 @@
       live.lastAt = time;
     }
     scheduleDomTranslation(text);
-    commitDomCues();
+    scheduleDomCommit();
   }
 
   function scheduleDomTranslation(text) {
@@ -625,7 +638,16 @@
     state.domCues.push({ start: live.start, end: end, text: live.text });
     if (state.domCues.length > 240) state.domCues.splice(0, state.domCues.length - 240);
     if (!silent) requestDomTranslation(live.text);
-    commitDomCues();
+    scheduleDomCommit();
+  }
+
+  function scheduleDomCommit() {
+    if (state.domCommitTimer) return;
+    state.domCommitTimer = setTimeout(function () {
+      state.domCommitTimer = null;
+      if (state.destroyed || !state.domMode) return;
+      commitDomCues();
+    }, DOM_COMMIT_MS);
   }
 
   function commitDomCues() {
@@ -770,12 +792,70 @@
     if (state.overlay && state.settings.enabled) {
       try { state.overlay.tick(video.currentTime); } catch (e) { /* 忽略 */ }
     }
+    maybeCheckNativeSync(video);
     if (!state.cues.length) return;
     const index = core.findCueIndex(state.cues, video.currentTime);
     if (index !== state.currentIndex) {
       state.currentIndex = index;
       onCueChanged(index);
     }
+  }
+
+  /**
+   * 个别视频的 timedtext 时间轴和 YouTube 原生字幕对不上。
+   * 定时比较当前 cue 与原生字幕 DOM 的文本重合度；连续不一致时
+   * 自动降级为 DOM 捕获，让英文和原生字幕同源，避免和音频错位。
+   */
+  function maybeCheckNativeSync(video) {
+    if (state.domMode || !state.settings.enabled || !state.cues.length) return;
+    const now = Date.now();
+    if (now - state.lastSyncCheckAt < 1000) return;
+    state.lastSyncCheckAt = now;
+    const nativeText = nativeEnglishCaptionText();
+    if (!nativeText) {
+      state.syncMismatchTicks = 0;
+      return;
+    }
+    if (nativeText !== state.lastNativeText) {
+      state.lastNativeText = nativeText;
+      state.nativeTextChanges++;
+    }
+    // 至少看到原生字幕更新过两次再比较，避免页面里静态/占位的原生字幕造成误判
+    if (state.nativeTextChanges < 2) return;
+    const index = core.findCueIndex(state.cues, video.currentTime);
+    const cue = index >= 0 ? state.cues[index] : null;
+    if (!cue || !cue.text) {
+      state.syncMismatchTicks = 0;
+      return;
+    }
+    const overlap = wordOverlap(cue.text, nativeText);
+    if (overlap < 0.2) state.syncMismatchTicks++;
+    else state.syncMismatchTicks = 0;
+    if (state.syncMismatchTicks >= 3) {
+      state.syncMismatchTicks = 0;
+      startDomFallback('检测到字幕时间轴与 YouTube 原生字幕不一致，已切换为页面字幕捕获');
+    }
+  }
+
+  function nativeEnglishCaptionText() {
+    const text = readDomCaptionText();
+    if (!text) return '';
+    const latin = (text.match(/[A-Za-z]/g) || []).length;
+    const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+    if (latin < 3 || latin <= cjk * 2) return '';
+    return text;
+  }
+
+  function wordOverlap(a, b) {
+    const toWords = function (s) {
+      return new Set(String(s || '').toLowerCase().match(/[a-z0-9]+(?:['’][a-z]+)?/g) || []);
+    };
+    const aw = toWords(a);
+    const bw = toWords(b);
+    if (!aw.size || !bw.size) return 1;
+    let common = 0;
+    aw.forEach(function (w) { if (bw.has(w)) common++; });
+    return common / Math.min(aw.size, bw.size);
   }
 
   function onCueChanged(index) {
