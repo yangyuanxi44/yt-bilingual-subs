@@ -145,6 +145,26 @@
   min-height: calc(var(--ytbtl-en-size, 24px) * 2.64);
 }
 
+/* DOM 模式把背景放到文字本体上：预留的第二行高度保持透明，
+   单行字幕不会出现“一行空白 + 一行文字”的背景框 */
+.ytbtl-subs.ytbtl-dom-lines .ytbtl-line-en {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.ytbtl-subs.ytbtl-dom-lines .ytbtl-en-text {
+  background-color: rgba(var(--ytbtl-bg-rgb, 0, 0, 0), var(--ytbtl-bg-opacity, 0));
+  padding: 2px 10px;
+  border-radius: 8px;
+}
+
+.ytbtl-subs.ytbtl-dom-lines.ytbtl-no-bg .ytbtl-en-text {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
 .ytbtl-en-text {
   display: block;
   width: 100%;

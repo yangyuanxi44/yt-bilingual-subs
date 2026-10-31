@@ -34,6 +34,7 @@
     subtitleBgOpacity: 0.35,
     opacity: 0.95,
     bottomOffset: 92, // 字幕区距播放器底部 px
+    subtitleDelay: 0, // 字幕延迟（秒）：正数 = 字幕更晚出现，负数 = 更早
     subtitleAlign: 'left', // left | center：左对齐时字幕起点固定，滚动更新不左右跳
     subtitlePos: null, // {x,y}：拖动后的归一化左上角坐标（0–1）；null = 默认底部居中
     hideNativeCaptions: true,
@@ -88,6 +89,8 @@
       ],
       hint: '左对齐时每句字幕都从固定起点开始，自动字幕逐词刷新时不会左右闪动' },
     { key: 'bottomOffset', group: '显示', label: '字幕距底部', type: 'range', min: 40, max: 220, step: 4, unit: 'px' },
+    { key: 'subtitleDelay', group: '显示', label: '字幕延迟', type: 'range', min: -3, max: 3, step: 0.1, unit: 's', default: 0,
+      hint: '字幕比音频早出现就调正数，晚出现就调负数；每次 0.1 秒微调' },
     { key: 'hideNativeCaptions', group: '显示', label: '隐藏 YouTube 原生字幕', type: 'boolean', hint: '避免与插件字幕重复显示' },
     { key: 'hideNativeWhenOff', group: '显示', label: '关闭字幕后也隐藏原生字幕', type: 'boolean', default: false, hint: '默认关闭：关掉插件字幕就退回 YouTube 原生字幕；打开则关掉插件后整块字幕都不显示' },
 
@@ -116,6 +119,7 @@
     subtitleBgOpacity: [0, 1],
     opacity: [0.35, 1],
     bottomOffset: [40, 220],
+    subtitleDelay: [-3, 3],
     prefetchAhead: [0, 200],
     batchSize: [1, 30],
     temperature: [0, 1.5],

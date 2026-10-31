@@ -42,6 +42,13 @@ test('normalizeSettings: 字幕颜色与背景颜色/不透明度', () => {
   assert.equal(Y.normalizeSettings({ subtitleBgOpacity: -1 }).subtitleBgOpacity, 0);
 });
 
+test('normalizeSettings: 字幕延迟范围', () => {
+  assert.equal(Y.normalizeSettings({}).subtitleDelay, 0);
+  assert.equal(Y.normalizeSettings({ subtitleDelay: 10 }).subtitleDelay, 3);
+  assert.equal(Y.normalizeSettings({ subtitleDelay: -10 }).subtitleDelay, -3);
+  assert.equal(Y.normalizeSettings({ subtitleDelay: 0.4 }).subtitleDelay, 0.4);
+});
+
 test('normalizeSettings: 单词卡中文释义开关（不影响视频字幕）', () => {
   assert.equal(Y.normalizeSettings({}).showCardChinese, true);
   assert.equal(Y.normalizeSettings({ showCardChinese: false }).showCardChinese, false);

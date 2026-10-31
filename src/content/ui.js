@@ -1384,8 +1384,9 @@
       if (!Number.isFinite(time)) return;
       if (!cues.length) return;
       let nextIndex = -1;
+      const delay = Number(settings.subtitleDelay) || 0;
       try {
-        nextIndex = C.findCueIndex(cues, time);
+        nextIndex = C.findCueIndex(cues, time - delay);
       } catch (error) {
         nextIndex = -1;
       }

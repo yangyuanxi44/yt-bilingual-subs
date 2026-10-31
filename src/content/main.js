@@ -65,6 +65,7 @@
     domObserver: null,
     domCaptureTimer: null,
     domPollTimer: null,
+    domEmptySince: 0,
     domCommitTimer: null,
     domTimeout: null,
     domText: '',
@@ -372,6 +373,7 @@
     state.domText = '';
     state.domCues = [];
     state.domLive = null;
+    state.domEmptySince = 0;
     state.domRequested.clear();
     state.lastDomTranslation = null;
     if (state.domStableTimer) { clearTimeout(state.domStableTimer); state.domStableTimer = null; }
@@ -452,6 +454,7 @@
     state.domText = '';
     state.domCues = [];
     state.domLive = null;
+    state.domEmptySince = 0;
     state.domRequested.clear();
     state.lastDomTranslation = null;
     if (state.domStableTimer) { clearTimeout(state.domStableTimer); state.domStableTimer = null; }
@@ -483,28 +486,25 @@
     try {
       if (getComputedStyle(container).display === 'none') return '';
     } catch (e) { /* 忽略 */ }
-    // 只读当前可见的 caption-window，避免容器里残留的历史 segment 让字幕提前/错位
-    const visibleSegments = [];
-    const windows = container.querySelectorAll('.caption-window, .ytp-caption-window');
-    for (let w = 0; w < windows.length; w++) {
-      const win = windows[w];
+    // 只读当前真正有尺寸的字幕 segment，避免读到隐藏的历史 cache
+    const all = container.querySelectorAll('.ytp-caption-segment');
+    if (!all.length) return '';
+    const segments = [];
+    for (let i = 0; i < all.length; i++) {
+      const seg = all[i];
       let rect = null;
-      try { rect = win.getBoundingClientRect(); } catch (e) { rect = null; }
-      if (!rect || rect.width < 2 || rect.height < 2) continue;
+      try { rect = seg.getBoundingClientRect(); } catch (e) { rect = null; }
+      if (!rect || rect.width < 1 || rect.height < 1) continue;
       let display = '';
-      try { display = getComputedStyle(win).display; } catch (e) { display = ''; }
+      try { display = getComputedStyle(seg).display; } catch (e) { display = ''; }
       if (display === 'none') continue;
-      const segs = win.querySelectorAll('.ytp-caption-segment');
-      for (let i = 0; i < segs.length; i++) visibleSegments.push(segs[i]);
+      segments.push(seg);
     }
-    const segments = visibleSegments.length
-      ? visibleSegments
-      : container.querySelectorAll('.ytp-caption-segment');
-    if (!segments.length) return '';
+    const list = segments.length ? segments : all;
     const parts = [];
-    const start = Math.max(0, segments.length - 6);
-    for (let i = start; i < segments.length; i++) {
-      const part = core.cleanText(segments[i].textContent || '');
+    const start = Math.max(0, list.length - 6);
+    for (let i = start; i < list.length; i++) {
+      const part = core.cleanText(list[i].textContent || '');
       if (part) parts.push(part);
     }
     let text = parts.join(' ');
@@ -586,10 +586,16 @@
     const text = domTailText(readDomCaptionText());
 
     if (!text) {
-      finalizeDomLive(time, true);
-      scheduleDomCommit();
+      // 原生字幕窗口在切换/淡出时可能短暂为空；不要立刻清屏，避免字幕闪一下
+      if (!state.domEmptySince) state.domEmptySince = Date.now();
+      if (Date.now() - state.domEmptySince >= 900) {
+        state.domEmptySince = 0;
+        finalizeDomLive(time, true);
+        scheduleDomCommit();
+      }
       return;
     }
+    state.domEmptySince = 0;
 
     const live = state.domLive;
     if (!live) {
@@ -825,6 +831,7 @@
    */
   function maybeCheckNativeSync(video) {
     if (state.domMode || !state.settings.enabled || !state.cues.length) return;
+    if (Number(state.settings.subtitleDelay)) return;
     const now = Date.now();
     if (now - state.lastSyncCheckAt < 1000) return;
     state.lastSyncCheckAt = now;
