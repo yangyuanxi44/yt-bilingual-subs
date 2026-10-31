@@ -64,6 +64,7 @@
     domMode: false,
     domObserver: null,
     domCaptureTimer: null,
+    domPollTimer: null,
     domCommitTimer: null,
     domTimeout: null,
     domText: '',
@@ -482,7 +483,23 @@
     try {
       if (getComputedStyle(container).display === 'none') return '';
     } catch (e) { /* 忽略 */ }
-    const segments = container.querySelectorAll('.ytp-caption-segment');
+    // 只读当前可见的 caption-window，避免容器里残留的历史 segment 让字幕提前/错位
+    const visibleSegments = [];
+    const windows = container.querySelectorAll('.caption-window, .ytp-caption-window');
+    for (let w = 0; w < windows.length; w++) {
+      const win = windows[w];
+      let rect = null;
+      try { rect = win.getBoundingClientRect(); } catch (e) { rect = null; }
+      if (!rect || rect.width < 2 || rect.height < 2) continue;
+      let display = '';
+      try { display = getComputedStyle(win).display; } catch (e) { display = ''; }
+      if (display === 'none') continue;
+      const segs = win.querySelectorAll('.ytp-caption-segment');
+      for (let i = 0; i < segs.length; i++) visibleSegments.push(segs[i]);
+    }
+    const segments = visibleSegments.length
+      ? visibleSegments
+      : container.querySelectorAll('.ytp-caption-segment');
     if (!segments.length) return '';
     const parts = [];
     const start = Math.max(0, segments.length - 6);
@@ -498,19 +515,13 @@
 
   /**
    * 原生 CC 的 DOM 会保留滚动缓存，textContent 可能是一大段历史台词。
-   * 这里只取最新一句话；若自动字幕没有标点，就取最后 16 个词，保证屏幕上不是一大块。
+   * 只保留最后 24 个词 / 190 字符；不按句子截尾，避免把原生同时显示的
+   * 上一行/当前行裁掉后造成字幕和音频错位。
    */
   function domTailText(raw) {
-    const text = core.cleanText(raw);
+    let text = core.cleanText(raw);
     if (!text) return '';
-    let tail = text;
-    try {
-      const sentences = core.splitSentences(text);
-      if (sentences.length) tail = sentences[sentences.length - 1];
-    } catch (e) {
-      tail = text;
-    }
-    let words = tail.split(/\s+/).filter(Boolean);
+    let words = text.split(/\s+/).filter(Boolean);
     if (!words.length) return '';
     if (words.length > DOM_TAIL_WORDS) words = words.slice(words.length - DOM_TAIL_WORDS);
     let out = words.join(' ');
@@ -532,6 +543,11 @@
       observer.observe(target, { childList: true, subtree: true, characterData: true });
       state.domObserver = observer;
       captureDomCaptions();
+      // MutationObserver 只会在文本变化时触发；原生字幕长时间保持不变时
+      // 也要轮询续期，否则 4.2 秒后英文会在句子中途消失。
+      state.domPollTimer = setInterval(function () {
+        try { captureDomCaptions(); } catch (e) { /* 忽略单次异常 */ }
+      }, 400);
       state.domTimeout = setTimeout(function () {
         state.domTimeout = null;
         if (!state.domMode) return;
@@ -556,6 +572,7 @@
     }
     if (state.domCaptureTimer) { clearTimeout(state.domCaptureTimer); state.domCaptureTimer = null; }
     if (state.domCommitTimer) { clearTimeout(state.domCommitTimer); state.domCommitTimer = null; }
+    if (state.domPollTimer) { clearInterval(state.domPollTimer); state.domPollTimer = null; }
     if (state.domStableTimer) { clearTimeout(state.domStableTimer); state.domStableTimer = null; }
     if (state.domGrowTimer) { clearTimeout(state.domGrowTimer); state.domGrowTimer = null; }
     if (state.domTimeout) { clearTimeout(state.domTimeout); state.domTimeout = null; }
