@@ -674,11 +674,13 @@
   }
 
   function commitDomCues() {
-    const list = state.domCues.slice();
-    if (state.domLive) list.push({ start: state.domLive.start, end: state.domLive.end, text: state.domLive.text });
-    if (!list.length) {
+    // DOM 模式没有时间轴：只维护「当前这一条」字幕，避免历史 cue 的
+    // 排序/截断在字幕切换时把当前文本挤掉，造成空白或错位。
+    const live = state.domLive;
+    if (!live || !live.text) {
       state.cues = [];
       state.translations = [];
+      state.currentIndex = -1;
       if (state.overlay) {
         try {
           state.overlay.setCues([]);
@@ -687,24 +689,18 @@
       }
       return;
     }
-    list.sort(function (a, b) { return a.start - b.start; });
-    let prevEnd = 0;
-    for (let i = 0; i < list.length; i++) {
-      const cue = list[i];
-      cue.start = Math.max(0, Number(cue.start) || 0);
-      if (cue.start < prevEnd - 0.05) cue.start = prevEnd;
-      cue.end = Math.max(cue.start + 0.6, Number(cue.end) || cue.start + 2);
-      prevEnd = cue.end;
-      cue.index = i;
-    }
-    const trimmed = list.length > 240 ? list.slice(list.length - 240) : list;
-    trimmed.forEach(function (cue, i) { cue.index = i; });
-    state.cues = trimmed;
-    state.translations = domCueTranslations(trimmed);
+    const cue = {
+      start: Math.max(0, Number(live.start) || 0),
+      end: Number.MAX_SAFE_INTEGER,
+      text: live.text,
+      index: 0,
+    };
+    state.cues = [cue];
+    state.translations = domCueTranslations([cue]);
     state.currentIndex = -1;
     if (state.overlay) {
       try {
-        state.overlay.setCues(trimmed);
+        state.overlay.setCues([cue]);
         state.overlay.setTranslations(state.translations);
       } catch (e) { /* 忽略 */ }
     }
